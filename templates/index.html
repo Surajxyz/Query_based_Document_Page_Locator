@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>PDF Vector Store</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+<body>
+
+<div class="navbar">
+
+    <div class="logo">
+        Document Locator
+    </div>
+
+    <div class="nav-links">
+
+        <a href="{{ url_for('index') }}">
+            PDF Insertion
+        </a>
+
+        <a href="{{ url_for('query_page') }}">
+            Ask Question
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>
+            PDF Insertion & Indexing
+        </h1>
+
+        <p class="description">
+
+            Upload a PDF to extract its text, create
+            400-token chunks, generate embeddings and
+            persist the FAISS vector index.
+
+        </p>
+
+
+        {% with messages = get_flashed_messages(
+            with_categories=true
+        ) %}
+
+            {% if messages %}
+
+                {% for category, message in messages %}
+
+                    <div class="alert {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+        {% endwith %}
+
+
+        <form
+            id="upload-form"
+            action="{{ url_for('upload_pdf') }}"
+            method="POST"
+            enctype="multipart/form-data"
+        >
+
+            <label>
+                Select PDF
+            </label>
+
+            <input
+                type="file"
+                name="pdf"
+                accept=".pdf"
+                required
+            >
+
+            <button
+                id="upload-button"
+                type="submit"
+            >
+                <span class="button-label">
+                    Upload & Create Vector Store
+                </span>
+                <span
+                    class="loading-indicator"
+                    aria-hidden="true"
+                ></span>
+            </button>
+
+            <p
+                id="upload-status"
+                class="upload-status"
+                role="status"
+                aria-live="polite"
+                hidden
+            >
+                Creating vector store. This may take a while...
+            </p>
+
+        </form>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>
+            Indexed PDFs
+        </h2>
+
+        {% if pdfs %}
+
+            <div class="pdf-list">
+
+                {% for pdf in pdfs %}
+
+                    <div class="pdf-item">
+
+                        <div>
+
+                            <strong>
+                                {{ pdf }}
+                            </strong>
+
+                        </div>
+
+                        <form
+                            action="{{ url_for(
+                                'delete_pdf',
+                                pdf_name=pdf
+                            ) }}"
+                            method="POST"
+                        >
+
+                            <button
+                                class="delete-button"
+                                type="submit"
+                                onclick="
+                                    return confirm(
+                                        'Delete this PDF index?'
+                                    );
+                                "
+                            >
+                                Delete
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <p class="empty">
+                No PDFs have been indexed yet.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<script>
+    const uploadForm = document.getElementById("upload-form");
+    const uploadButton = document.getElementById("upload-button");
+    const uploadStatus = document.getElementById("upload-status");
+
+    uploadForm.addEventListener("submit", () => {
+        uploadButton.disabled = true;
+        uploadButton.querySelector(".button-label").textContent =
+            "Creating Vector Store...";
+        uploadButton.querySelector(".loading-indicator").setAttribute(
+            "aria-hidden",
+            "false"
+        );
+        uploadStatus.hidden = false;
+    });
+</script>
+
+</body>
+
+</html>

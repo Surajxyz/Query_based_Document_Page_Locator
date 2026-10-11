@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Ask PDF</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+<body>
+
+<div class="navbar">
+
+    <div class="logo">
+        Document Locator 
+    </div>
+
+    <div class="nav-links">
+
+        <a href="{{ url_for('index') }}">
+            PDF Insertion
+        </a>
+
+        <a href="{{ url_for('query_page') }}">
+            Ask Question
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>
+            Ask a Question
+        </h1>
+
+        <p class="description">
+
+            Select an indexed PDF and enter your question.
+            The system retrieves relevant page content and
+            identifies its original PDF page.
+
+        </p>
+
+
+        {% if error %}
+
+            <div class="alert error">
+                {{ error }}
+            </div>
+
+        {% endif %}
+
+
+        <form
+            id="question-form"
+            action="{{ url_for('search') }}"
+            method="POST"
+        >
+
+            <label>
+                Select PDF
+            </label>
+
+            <select
+                name="pdf_name"
+                required
+            >
+
+                <option value="">
+                    -- Select PDF --
+                </option>
+
+                {% for pdf in pdfs %}
+
+                    <option
+                        value="{{ pdf }}"
+                        {% if selected_pdf == pdf %}
+                            selected
+                        {% endif %}
+                    >
+
+                        {{ pdf }}
+
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+
+            <label>
+                Enter Question
+            </label>
+
+            <textarea
+                name="query"
+                rows="5"
+                placeholder="Enter your question..."
+                required
+            >{{ query or "" }}</textarea>
+
+
+            <button
+                id="submit-button"
+                type="submit"
+            >
+                Search PDF
+            </button>
+
+            <div
+                id="loading-indicator"
+                class="loading-indicator"
+                aria-live="polite"
+                aria-hidden="true"
+                hidden
+            >
+                <span class="loader" aria-hidden="true"></span>
+                <span>Generating your answer...</span>
+            </div>
+
+        </form>
+
+    </div>
+
+
+    {% if query %}
+
+    {% if results %}
+
+    <div class="card page-card">
+
+        <h2>
+            Answer Located On Page(s)
+        </h2>
+
+        <div class="page-container">
+
+            {% for page in pages %}
+
+                <div class="page-number">
+
+                    Page {{ page }}
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>
+            Retrieved Pages
+        </h2>
+
+        {% for result in results %}
+
+            <div class="result">
+
+                <div class="result-header">
+
+                    <span class="page-badge">
+                        Page {{ result.page }}
+                    </span>
+
+                    <span class="score">
+
+                        Cosine similarity:
+                        {{ "%.4f"|format(result.score) }}
+
+                    </span>
+
+                </div>
+
+
+                <p class="chunk-text">
+
+                    {{ result.highlighted_text|safe }}
+
+                </p>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="alert error">
+        Answer not in the PDF.
+    </div>
+
+    {% endif %}
+
+    {% endif %}
+
+</div>
+
+<script>
+    const questionForm = document.getElementById("question-form");
+    const submitButton = document.getElementById("submit-button");
+    const loadingIndicator = document.getElementById("loading-indicator");
+
+    questionForm.addEventListener("submit", () => {
+        submitButton.disabled = true;
+        submitButton.textContent = "Searching...";
+        loadingIndicator.hidden = false;
+        loadingIndicator.setAttribute("aria-hidden", "false");
+    });
+</script>
+
+</body>
+
+</html>
